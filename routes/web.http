@@ -1,0 +1,53 @@
+###
+# Petition Reverse Good Format
+POST http://localhost/message
+cache-control: no-cache
+postman-token: 4176c734-dbe0-f09f-43fa-c3fd031c3097
+Content-Type: application/x-www-form-urlencoded
+
+<?xml version="1.0" encoding="UTF-8"?>
+<reverse_request>
+	<uuid>9aef2164-17df-4a2b-94f2-8eb74243dc70</uuid>
+	<type>reverse_request</type>
+	<user>
+		<uuid>392001ab-b6be-4d53-8be8-da9ef7f90cfd</uuid>
+		<name>Nombre del usuario</name>
+		<surname>Nombre del usuario</surname>
+		<address>jnogueramunoz@gmail.com</address>
+	</user>
+  <body>
+	<uuid>833a604c-fc2e-4dd1-96e2-09b94465d429</uuid>
+    <address>jnogueramunoz@gmail.com</address>
+    <subject>Este es el titulo del mensaje</subject>
+    <content>Hellos</content>
+  </body>
+</reverse_request>
+
+###
+
+###
+# Petition Count Good Format
+POST http://localhost/message
+cache-control: no-cache
+postman-token: a8764a45-ba6c-fcd5-2e8a-9ce06e82a64a
+Content-Type: application/x-www-form-urlencoded
+
+<?xml version="1.0" encoding="UTF-8"?>
+<count_request>
+	<uuid>6062fea5-cc05-453b-8df2-e3fdaba5de6a</uuid>
+	<type>count_request</type>
+	<user>
+		<uuid>e335ba19-7845-4753-9d78-7650ab644c4f</uuid>
+		<name>Nombre del usuario</name>
+		<surname>Nombre del usuario</surname>
+		<address>jnogueramunoz@gmail.com</address>
+	</user>
+  <body>
+	<uuid>e335ba19-7845-4753-9d78-9000ab644c4f</uuid>
+    <address>jnogueramunoz@gmail.com</address>
+    <subject>Este es el titulo del mensaje</subject>
+    <content>Hellos</content>
+  </body>
+</count_request>
+
+###
