@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<count_request>
+    <uuid>6062fea5-cc05-453b-8df2-e3fdaba5de6a</uuid>
+    <type>count_request</type>
+    <user>
+        <uuid>e335ba19-2315-4753-9d78-7650ab644c4f</uuid>
+        <nickname>Nickname</nickname>
+        <name>Nombre del usuario</name>
+        <surname>Nombre del usuario</surname>
+        <address>javi.noguera@icloud.com</address>
+    </user>
+    <plos>
+        <address>jnogueramunoz@gmail.com</address>
+        <subject>Este es el titulo del mensaje</subject>
+        <plos>Hellos
+    </plos>
+</count_request>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<count_request>
+    <uuid>6062fea5-cc05-453b-8df2-e3fdaba5de6a</uuid>
+    <header>
+        <type>count_request</type>
+        <sender>Gamer</sender>
+        <recipient>Backend</recipient>
+        <timestamp>2013-12-19T16:45:10.950+01:00</timestamp>
+    </header>
+    <body>
+        <address>jnogueramunoz@gmail.com</address>
+        <subject>Este es el titulo del mensaje</subject>
+        <content>Hellos</content>
+    </body>
+</count_request>
