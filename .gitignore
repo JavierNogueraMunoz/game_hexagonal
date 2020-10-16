@@ -1,0 +1,11 @@
+.vscode
+.idea
+vendor
+node_modules
+reports
+
+.env
+composer.lock
+package-lock.json
+infection.log
+
