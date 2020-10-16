@@ -1,0 +1,60 @@
+#!/bin/bash
+
+DOCKER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd -P )"
+PRJ_DIR="$( cd "${DOCKER_DIR}/../../.." && pwd -P )"
+container_name=phpunit_integration
+
+
+echo -e "\n--------------------------------------- BUILD CONTAINERS -----------------------------------------------"
+    docker-compose -f "${PRJ_DIR}/docker/tests/docker-compose-integration.yml" build >> /dev/null 2>&1
+
+echo -e "\n--------------------------------------- UP CONTAINERS --------------------------------------------------"
+    docker-compose -f "${PRJ_DIR}/docker/tests/docker-compose-integration.yml" up -d >> /dev/null 2>&1
+
+if [ ! -d "vendor" ]; then
+
+    echo -e "\n--------------------------------- COMPOSER DUMP-AUTOLOAD  -----------------------------------------------\n"
+        docker exec -it phpunit_integration composer install >> /dev/null 2>&1
+
+fi
+
+echo -e "\n--------------------------------------- CONFIG CLEAR  --------------------------------------------------\n"
+    docker exec -it phpunit_integration php artisan config:clear >> /dev/null 2>&1
+
+echo -e "\n--------------------------------------- GENERATION KEY  ------------------------------------------------\n"
+    docker exec -it phpunit_integration php artisan key:generate >> /dev/null 2>&1
+
+echo -e "\n--------------------------------------- CONFIG CACHE  --------------------------------------------------\n"
+    docker exec -it phpunit_integration php artisan config:cache >> /dev/null 2>&1
+
+echo -e "\n--------------------------------------- CREATE USER LARAVELUSER  ------------------------------------"
+    docker exec -i db_integration mysql -u root --password=root -e 'CREATE USER "laraveluser"@"%" IDENTIFIED BY "your_laravel_db_password";'  >> /dev/null 2>&1 &&
+
+echo -e "\n--------------------------------------- ADD PERMISSION LARAVELUSER ------------------------------------"
+    docker exec -i db_integration mysql -u root --password=root -e 'GRANT ALL PRIVILEGES ON * . * TO "laraveluser"@"%";' >> /dev/null 2>&1 &&
+
+echo -e "\n--------------------------------------- EXECUTE MIGRATIONS  --------------------------------------------"
+    docker exec -it phpunit_integration php artisan migrate >> /dev/null 2>&1
+
+echo -e "\n--------------------------------------- EXECUTE TEST INTEGRATION --------------------------------------------------\n"
+
+if docker exec -i phpunit_integration php ./vendor/bin/phpunit --testsuite IntegrationTest; then
+
+    echo -e "\n  |||||   |||||   |||||   |||||      |   |   |   |||||   |||||   |||||   |||||   |||||   |||||   |   |||||   |   |      |||||   |   |   |||||   |||||   |||||   |||||   |||||   |"
+    echo "    |     |       |         |        |   ||  |     |     |       |       |   |   |   |     |     |   |   |   ||  |      |       |   |   |       |       |       |       |       |"
+    echo "    |     |||||     |       |        |   | | |     |     |||||   |   _   |||||   |||||     |     |   |   |   | | |        |     |   |   |       |       |||||     |       |     |"
+    echo "    |     |           |     |        |   |  ||     |     |       |   |   |  |    |   |     |     |   |   |   |  ||          |   |   |   |       |       |           |       |    "
+    echo -e "    |     |||||   |||||     |        |   |   |     |     |||||   |||||   |   |   |   |     |     |   |||||   |   |      |||||   |||||   |||||   |||||   |||||   |||||   |||||   |\n"
+
+else
+
+    echo "  |||||   |||||   |||||   |||||      |   |   |   |||||   |||||   |||||   |||||   |||||   |||||   |   |||||   |   |        |||||   |||||   |   |       |"
+    echo "    |     |       |         |        |   ||  |     |     |       |       |   |   |   |     |     |   |   |   ||  |        |       |   |   |   |       |"
+    echo "    |     |||||     |       |        |   | | |     |     |||||   |   _   |||||   |||||     |     |   |   |   | | |        |||||   |||||   |   |       |"
+    echo "    |     |           |     |        |   |  ||     |     |       |   |   |  |    |   |     |     |   |   |   |  ||        |       |   |   |   |        "
+    echo "    |     |||||   |||||     |        |   |   |     |     |||||   |||||   |   |   |   |     |     |   |||||   |   |        |       |   |   |   |||||   |"
+
+fi
+
+# Stop container database
+    docker stop db_integration >> /dev/null 2>&1 && docker stop phpunit_integration >> /dev/null 2>&1

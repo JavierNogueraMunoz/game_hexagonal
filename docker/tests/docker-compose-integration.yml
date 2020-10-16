@@ -1,0 +1,30 @@
+version: '3'
+services:
+
+  db_integration:
+    image: mysql:latest
+    container_name: db_integration
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - dbintegration:/var/lib/mysql/
+      - ./sql:/docker-entrypoint-initdb.d
+
+  phpunit:
+    container_name: phpunit_integration
+    build:
+      context: ../../../game_hexagonal_laravel
+      dockerfile: ./docker/tests/Dockerfile
+    working_dir: /var/www
+    volumes:
+      - ../../:/var/www
+      - ../../.env.testing:/var/www/.env
+      - ./php-fpm/local.ini:/usr/local/etc/php/conf.d/local.ini
+
+#Volumes
+volumes:
+  dbintegration:
+    driver: local

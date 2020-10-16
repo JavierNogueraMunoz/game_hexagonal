@@ -1,0 +1,69 @@
+#!/bin/bash
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PRJ_DIR="$( cd "${SCRIPT_DIR}/../../.." && pwd -P )"
+PACKAGE_DIR="$( cd "${SCRIPT_DIR}/../package" && pwd -P )"
+
+export PATH=~/.composer/vendor/bin:$PATH
+export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-"${PRJ_NAME}_dev"}"
+
+echo -e "\n--------------------------------------- LOAD FILES  -----------------------------------------------"
+
+source "${SCRIPT_DIR}/../../bashLib/io.sh"
+source "${SCRIPT_DIR}/../../bashLib/commonVariables.sh"
+
+if [[ ! -d "${SCRIPT_DIR}/nginx/var-log"  ]]; then
+
+     echo -e "\n--------------------------------------- CREATE DIR LOGS   -----------------------------------------------"
+     mkdir -p "${SCRIPT_DIR}/nginx/var-log" >> /dev/null 2>&1                                                                     && \
+     mkdir -p "${SCRIPT_DIR}/php-fpm/var-log" >> /dev/null 2>&1                                                    ;
+
+fi
+
+if [[ "$(docker images -q app_php:latest 2> /dev/null)" == "" ]]; then
+
+     echo -e "\n--------------------------------------- BUILD CONTAINERS  -----------------------------------------------"
+     docker build "${SCRIPT_DIR}" >> /dev/null 2>&1
+fi
+
+    echo -e "\n--------------------------------------- UP CONTAINERS  -----------------------------------------------"
+    docker-compose -f "${SCRIPT_DIR}/docker-compose.yml" up -d >> /dev/null 2>&1
+
+if [[ ! -f "${PRJ_DIR}/.env" ]]; then
+
+    echo -e "\n--------------------------------------- INSTALL DEPENDENCIES  -----------------------------------------------"
+    scall "${SCRIPT_DIR}/init" >> /dev/null 2>&1
+
+fi
+
+if [[ ! -f "${PRJ_DIR}/.env" ]]; then
+
+    echo -e "\n--------------------------------------- COPY FILE .env  -----------------------------------------------"
+    cp "${PRJ_DIR}/.env.example"  "${PRJ_DIR}/.env" >> /dev/null 2>&1
+
+    echo -e "\n--------------------------------------- GENERATION KEY  -----------------------------------------------"
+    scall "${PACKAGE_DIR}/artisan" key:generate >> /dev/null 2>&1
+
+    echo -e "\n--------------------------------------- ADD PERMISSION LARAVELUSER  -----------------------------------------------"
+    docker exec -i ${MYSQL_DOCKER} mysql -u root --password=your_laravel_db_password -e 'GRANT ALL ON laravel.* TO "laraveluser"@"%" IDENTIFIED BY "your_laravel_db_password";FLUSH PRIVILEGES;' &&
+
+    echo -e "\n--------------------------------------- RUN MIGRATIONS  -----------------------------------------------" &&
+    scall "${PACKAGE_DIR}/artisan" migrate >> /dev/null 2>&1 &&
+
+    echo -e "\n--------------------------------------- RUN SEEDERS  -----------------------------------------------" #&&
+    scall "${PACKAGE_DIR}/artisan" db:seed >> /dev/null 2>&1
+
+    echo -e "\n--------------------------------------- INSTALL DEPENDENCIES  -----------------------------------------------"
+    scall "${SCRIPT_DIR}/init" >> /dev/null 2>&1
+
+fi
+
+echo -e "\n--------------------------------------- CONFIG CACHE  -----------------------------------------------"
+    scall "${PACKAGE_DIR}/artisan" config:cache >> /dev/null 2>&1
+
+
+echo -e "\n        |||||   |||||   |||||  |||||   |||||     |||||   |||||         |   |   |||||   |"
+echo "        |   |   |   |   |   |      |   |         |         |           |   |   |   |   |"
+echo "        |||||   |||||   |   |      |   |||||     |         |           |   |   |||||   |"
+echo "        |       ||      |   |      |   |         |         |           |   |   |        "
+echo -e "        |       |  |    |||||  |||||   |||||     |||||     |           |||||   |       |\n"

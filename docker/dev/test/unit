@@ -1,0 +1,75 @@
+#!/bin/bash
+
+DOCKER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd -P )"
+PRJ_DIR="$( cd "${DOCKER_DIR}/../../.." && pwd -P )"
+container_name=phpunit_unit
+
+if ! docker ps -a --format '{{.Names}}' | grep -Eq "^${container_name}\$"; then
+
+    echo -e "\n--------------------------------------- BUILD CONTAINERS -----------------------------------------------\n"
+        docker-compose -f "${PRJ_DIR}/docker/tests/docker-compose.yml" build >> /dev/null 2>&1
+
+    echo -e "\n--------------------------------------- UP CONTAINERS 1--------------------------------------------------\n"
+        docker-compose -f "${PRJ_DIR}/docker/tests/docker-compose.yml" up -d >> /dev/null 2>&1
+
+    if [ ! -d "vendor" ]; then
+
+      echo -e "\n--------------------------------- COMPOSER DUMP-AUTOLOAD  -----------------------------------------------\n"
+          docker exec -it phpunit_unit composer install >> /dev/null 2>&1
+
+      echo -e "\n--------------------------------------- CONFIG CLEAR  --------------------------------------------------\n"
+          docker exec -it phpunit_unit php artisan config:clear >> /dev/null 2>&1
+
+      echo -e "\n--------------------------------- COMPOSER DUMP-AUTOLOAD  -----------------------------------------------\n"
+          docker exec -it phpunit_unit composer dump-autoload >> /dev/null 2>&1
+
+    else
+
+        echo -e "\n--------------------------------------- CONFIG CLEAR  --------------------------------------------------\n"
+            docker exec -it phpunit_unit php artisan config:clear >> /dev/null 2>&1
+
+    fi
+
+    echo -e "\n--------------------------------------- GENERATION KEY  ------------------------------------------------\n"
+        docker exec -it phpunit_unit php artisan key:generate >> /dev/null 2>&1
+
+    echo -e "\n--------------------------------------- CONFIG CACHE  --------------------------------------------------\n"
+        docker exec -it phpunit_unit php artisan config:cache >> /dev/null 2>&1
+
+else
+
+    echo -e "\n--------------------------------------- UP CONTAINERS --------------------------------------------------\n"
+        docker-compose -f "${PRJ_DIR}/docker/tests/docker-compose.yml" up -d >> /dev/null 2>&1
+
+    if [ ! -d "vendor" ]; then
+
+        echo -e "\n--------------------------------- COMPOSER DUMP-AUTOLOAD  -----------------------------------------------\n"
+            docker exec -it phpunit_unit composer install >> /dev/null 2>&1
+
+        echo -e "\n--------------------------------------- CONFIG CLEAR  --------------------------------------------------\n"
+            docker exec -it phpunit_unit php artisan config:clear >> /dev/null 2>&1
+
+        echo -e "\n--------------------------------- COMPOSER DUMP-AUTOLOAD  -----------------------------------------------\n"
+            docker exec -it phpunit_unit composer dump-autoload >> /dev/null 2>&1
+
+    fi
+fi
+
+echo -e "\n--------------------------------------- EXECUTE TEST UNIT --------------------------------------------------\n"
+
+if docker exec -i phpunit_unit php ./vendor/bin/phpunit --testsuite UnitTest; then
+    echo -e "\n  |||||   |||||   |||||   |||||      |   |   |   |   |   |||||      |||||   |   |   |||||   |||||   |||||   |||||   |||||   |"
+    echo "    |     |       |         |        |   |   ||  |   |     |        |       |   |   |       |       |       |       |       |"
+    echo "    |     |||||     |       |        |   |   | | |   |     |          |     |   |   |       |       |||||     |       |     |"
+    echo "    |     |           |     |        |   |   |  ||   |     |            |   |   |   |       |       |           |       |    "
+    echo -e "    |     |||||   |||||     |        |||||   |   |   |     |        |||||   |||||   |||||   |||||   |||||   |||||   |||||   |\n"
+else
+    echo -e "\n  |||||   |||||   |||||   |||||      |   |   |   |   |   |||||      |||||   |||||   |   |       |"
+    echo "    |     |       |         |        |   |   ||  |   |     |        |       |   |   |   |       |"
+    echo "    |     |||||     |       |        |   |   | | |   |     |        |||||   |||||   |   |       |"
+    echo "    |     |           |     |        |   |   |  ||   |     |        |       |   |   |   |        "
+    echo -e "    |     |||||   |||||     |        |||||   |   |   |     |        |       |   |   |   |||||   |\n"
+fi
+
+# Stop container database
+    docker stop db_unit >> /dev/null 2>&1 && docker stop phpunit_unit >> /dev/null 2>&1

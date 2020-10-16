@@ -1,0 +1,20 @@
+#!/bin/bash
+
+run() {
+
+    local _saved_variables="$(declare -px)"
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd -P )"
+
+    source "${SCRIPT_DIR}/../../bashLib/io.sh"
+    source "${SCRIPT_DIR}/../../bashLib/commonVariables.sh"
+
+    local _process_status=1
+
+    echo -e "\n--------------------------------------- NPM "${@}"  -----------------------------------------------"
+    docker exec ${APP_DOCKER} npm "${@}"
+
+    _process_status=$?
+    eval "${_saved_variables}"
+    return ${_process_status}
+}
+run "$@"

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PACKAGE_DIR="$( cd "${SCRIPT_DIR}/../package" && pwd -P )"
+
+source "${SCRIPT_DIR}/../../bashLib/io.sh"
+
+echo -e "\n--------------------------------------- INSTALL COMPOSER DEPENDENCIES  -----------------------------------------------"
+    scall "${PACKAGE_DIR}/composer" install
+
+echo -e "\n--------------------------------------- COMPOSER DUMP-AUTOLOAD  -----------------------------------------------"
+    scall "${PACKAGE_DIR}/composer" dump-autoload
+
+echo -e "\n--------------------------------------- INSTALL NPM DEPENDENCIES  -----------------------------------------------"
+    scall "${PACKAGE_DIR}/npm" install
+
+echo -e "\n--------------------------------------- COMPILING WEBPACK  -----------------------------------------------"
+    scall "${PACKAGE_DIR}/npm" run dev
